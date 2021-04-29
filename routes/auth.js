@@ -9,8 +9,8 @@ const router = Router();
 router.post(
   "/login",
   [
-    check("email", messages.invalidEmailOrPassword).isEmail(),
-    check("password", messages.invalidEmailOrPassword).isLength({
+    check("email").isEmail(),
+    check("password").isLength({
       min: 8,
     }),
   ],
@@ -19,26 +19,27 @@ router.post(
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return res.status(400).json({
-          errors: errors.array(),
+          email: messages.invalidEmailOrPassword,
         });
       }
-      const { email, password } = req.body;
+      const { email, password, rememberMe } = req.body;
       const user = await User.findOne({ email });
       if (!user) {
-        return res.status(400).json({ error: messages.invalidEmailOrPassword });
+        return res.status(400).json({ email: messages.invalidEmailOrPassword });
       }
-      const passwordIsMatch = bcrypt.compare(password, user.password);
+      const passwordIsMatch = await bcrypt.compare(password, user.password);
       if (!passwordIsMatch) {
-        return res.status(400).json({ error: messages.invalidEmailOrPassword });
+        return res.status(400).json({ email: messages.invalidEmailOrPassword });
       }
+      const tokenAlive = rememberMe ? "168h" : "24h";
       const token = jwt.sign(
         { userId: user.id },
         process.env.NODE_APP_JWT_SECRET,
         {
-          expiresIn: "24h",
+          expiresIn: tokenAlive,
         }
       );
-      return res.status(204).set("Authorization", `Bearer ${token}`).json({});
+      return res.status(200).set("Authorization", `Bearer ${token}`).json({});
     } catch (error) {
       return res.status(500).json({ message: error });
     }
@@ -62,11 +63,15 @@ router.post(
       const { email, phone } = req.body;
       const phoneTaken = await User.findOne({ phone });
       const emailTaken = await User.findOne({ email });
+      const takenErrors = {};
       if (phoneTaken) {
-        return res.status(400).json({ phone: messages.takenPhone });
-      } else if (emailTaken) {
-        return res.status(400).json({ email: messages.takenEmail });
+        takenErrors["phone"] = messages.takenPhone;
       }
+      if (emailTaken) {
+        takenErrors["email"] = messages.takenEmail;
+      }
+      if (Object.keys(takenErrors).length)
+        return res.status(400).json(takenErrors);
       const hashedPassword = await bcrypt.hash(req.body.password, 12);
       const user = new User({ ...req.body, password: hashedPassword });
       await user.save();

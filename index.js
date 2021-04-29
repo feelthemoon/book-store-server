@@ -6,6 +6,20 @@ dotenv.config();
 const app = express();
 
 app.use(express.json({ extended: true }));
+app.use(function (req, response, next) {
+  response.setHeader("Access-Control-Allow-Origin", "*");
+  response.setHeader("Access-Control-Allow-Credentials", true);
+  response.setHeader(
+    "Access-Control-Allow-Methods",
+    "GET,HEAD,OPTIONS,POST,PUT"
+  );
+  response.setHeader(
+    "Access-Control-Allow-Headers",
+    "Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers, Cache-Control, Access-Control-Allow-Origin, Authorization"
+  );
+  response.setHeader("Access-Control-Expose-Headers", "Authorization");
+  next();
+});
 app.post("/login", auth);
 app.post("/register", auth);
 async function start() {
