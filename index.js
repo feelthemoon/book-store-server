@@ -2,11 +2,12 @@ import express from "express";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import auth from "./routes/auth.js";
+import books from "./routes/books.js";
 dotenv.config();
 const app = express();
 
 app.use(express.json({ extended: true }));
-app.use(function (req, response, next) {
+app.use(function (_, response, next) {
   response.setHeader("Access-Control-Allow-Origin", "*");
   response.setHeader("Access-Control-Allow-Credentials", true);
   response.setHeader(
@@ -22,6 +23,8 @@ app.use(function (req, response, next) {
 });
 app.post("/login", auth);
 app.post("/register", auth);
+app.get("/api/v1/books", books);
+app.get("/api/v1/books/:id", books);
 async function start() {
   try {
     await mongoose.connect(process.env.NODE_APP_MONGO_URI, {
