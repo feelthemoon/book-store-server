@@ -6,9 +6,20 @@ const router = new Router();
 
 router.get("/api/v1/books", authMiddleware, async (req, res) => {
   try {
-    let books = [];
-    await Books.find((_, items) => {
-      books = items.slice(req.query.page * 20, req.query.page * 20 + 20);
+    const books = (
+      await Books.find({})
+        .skip(req.query.page * 6)
+        .limit(6)
+        .exec()
+    ).map((book) => {
+      return {
+        id: book.id,
+        book: book.book,
+        author: book.author,
+        img: book.img,
+        genre: book.genre,
+        price: book.price,
+      };
     });
     res.json(books);
   } catch (error) {
@@ -17,8 +28,15 @@ router.get("/api/v1/books", authMiddleware, async (req, res) => {
 });
 router.get("/api/v1/books/:id", authMiddleware, async (req, res) => {
   try {
-    const book = await Books.findOne({ _id: req.params.id }).exec();
-    res.json(book);
+    const book = await Books.findOne({ id: req.params.id }).exec();
+    res.json({
+      id: book.id,
+      book: book.book,
+      author: book.author,
+      img: book.img,
+      genre: book.genre,
+      price: book.price,
+    });
   } catch (error) {
     res.status(500).json({ message: error });
   }
