@@ -6,22 +6,25 @@ const router = new Router();
 
 router.get("/api/v1/books", authMiddleware, async (req, res) => {
   try {
-    const books = (
-      await Books.find({})
-        .skip(req.query.page * 6)
-        .limit(6)
-        .exec()
-    ).map((book) => {
-      return {
-        id: book.id,
-        book: book.book,
-        author: book.author,
-        img: book.img,
-        genre: book.genre,
-        price: book.price,
-      };
-    });
-    res.json(books);
+    const [paginationLength, books] = await Promise.all([
+      await Books.countDocuments().exec(),
+      (
+        await Books.find()
+          .skip(req.query.page * 6 - 6)
+          .limit(6)
+          .exec()
+      ).map((book) => {
+        return {
+          id: book.id,
+          book: book.book,
+          author: book.author,
+          img: book.img,
+          genre: book.genre,
+          price: book.price,
+        };
+      }),
+    ]);
+    res.json({ books, paginationLength: Math.floor(paginationLength / 6) });
   } catch (error) {
     res.status(500).json({ message: error });
   }
