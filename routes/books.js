@@ -24,7 +24,7 @@ router.get("/api/v1/books", authMiddleware, async (req, res) => {
         };
       }),
     ]);
-    res.json({ books, paginationLength: Math.floor(paginationLength / 6) });
+    res.json({ books, paginationLength: Math.ceil(paginationLength / 6) });
   } catch (error) {
     res.status(500).json({ message: error });
   }
